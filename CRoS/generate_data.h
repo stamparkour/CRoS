@@ -21,27 +21,25 @@ namespace stamp {
 		Vector3d{1,1,1},
 	};
 
-	inline const Quaterniond rotation_start = Quaterniond{
-		AngleAxisd(45 * std::numbers::pi,Vector3d::UnitZ()) *
-		AngleAxisd(45 * std::numbers::pi,Vector3d::UnitX()) *
-		AngleAxisd(0 * std::numbers::pi,Vector3d::UnitY())
-	};
-	inline const Quaterniond rotation_velocity = Quaterniond{
-		AngleAxisd(0 * std::numbers::pi,Vector3d::UnitZ()) *
-		AngleAxisd(0 * std::numbers::pi,Vector3d::UnitX()) *
-		AngleAxisd(60 * std::numbers::pi,Vector3d::UnitY())
-	};
+	inline const Quaterniond rotation_start =
+		Quaterniond{ AngleAxisd(22 / 180.0 * std::numbers::pi,Vector3d::UnitZ()) } *
+		Quaterniond{ AngleAxisd(20 / 180.0 * std::numbers::pi,Vector3d::UnitX()) } *
+		Quaterniond{ AngleAxisd(38 / 180.0 * std::numbers::pi,Vector3d::UnitY()) };
+	inline const Quaterniond rotation_velocity = 
+		Quaterniond{ AngleAxisd(-10 / 180.0 * std::numbers::pi,Vector3d::UnitZ())} *
+		Quaterniond{ AngleAxisd(-5 / 180.0 * std::numbers::pi,Vector3d::UnitX())} *
+		Quaterniond{ AngleAxisd(2 / 180.0 * std::numbers::pi,Vector3d::UnitY())};
 
 	inline const Vector3d position_velocity = Vector3d{ 0.25, 1.5, 1 };
-	inline const double time_end = 5;
-	inline const double time_delta = 0.1;
+	inline const double time_end = 10;
+	inline const double time_delta = 0.04;
 
 	struct pointcloud_state_t {
 		double time;
 		std::vector<Vector3d> points;
 	};
 
-	std::vector<pointcloud_state_t> generate_data() {
+	std::vector<pointcloud_state_t> generate_data(Quaterniond& rot_o) {
 		std::vector<pointcloud_state_t> arr{};
 		Quaterniond rot = rotation_start;
 		Vector3d pos{ 0,0,0 };
@@ -54,9 +52,10 @@ namespace stamp {
 			}
 
 			rot.normalize();
-			rot *= Quaterniond{ 1,0,0,0 }.slerp(time_delta, rotation_velocity); // rot_vel^time_delta
+			rot = Quaterniond{ 1,0,0,0 }.slerp(time_delta, rotation_velocity) * rot; // rot_vel^time_delta
 			pos += position_velocity * time_delta;
 		}
+		rot_o = rotation_velocity;
 		return arr;
 	}
 }
