@@ -1,4 +1,5 @@
 include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
 
 set(CROS_SOURCE 
 	"src/source.cpp"

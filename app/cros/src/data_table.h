@@ -205,7 +205,7 @@ namespace cros {
 			auto mat = entry.mat;
 			if (index % jump == 0) {
 				auto point = desmos_transform * mat * Eigen::Vector4d(0, 0, 0, 1);
-				str.append(point.block<1,3>(0,0));
+				str.append(point.block<3,1>(0,0));
 			}
 			index++;
 		});
@@ -221,7 +221,7 @@ namespace cros {
 			auto mat = entry.mat;
 			if (index % jump == 0) {
 				auto point = desmos_transform * mat * Eigen::Vector4d(dir == 1 ? 1 : 0, dir == 2 ? 1 : 0, dir == 3 ? 1 : 0, 0);
-				str.append(point.block<1, 3>(0, 0));
+				str.append(point.block<3,1>(0, 0));
 			}
 			index++;
 		});

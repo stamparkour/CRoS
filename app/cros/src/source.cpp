@@ -11,6 +11,12 @@ static data_table calc_transforms(std::istream* _colmap, std::istream* _fit) {
 	data_table colmap_table = parse_colmap_images_data(_colmap); // colmap world to camera space
 	data_table fit_table = parse_fit_data(_fit); // camera space to earth space
 	
+	print_desmos_formatted_points(fit_table);
+	std::cout << std::endl;
+	data_table col_inv = colmap_table;
+	col_inv.inverse();
+	print_desmos_formatted_points(col_inv);
+
 	//colmap world space to earth space
 	return fit_table * colmap_table;
 }
@@ -46,12 +52,18 @@ static double calc_error(data_table& guess, data_table& target, int frame_delta 
 	// char c;
 	// std::cin >> c;
 
-	//point_str rot_plane_guess{};
-	//point_str rot_plane_target{};
+	point_str rot_plane_guess{};
+	point_str rot_plane_target{};
 
 	double error = 0;
-	double total = 0;
+	double normal_error = 0;
 	double total_count = 0;
+
+	double angle_error = 0;
+	double angle_total = 0;
+	double angle_normal_error = 0;
+	double angle_total_count = 0;
+
 	for (int i = 0; i < delta_guess.table.size() && i < delta_target.table.size(); i++) {
 		// mean square error per element
 		double e = 0;
@@ -59,8 +71,8 @@ static double calc_error(data_table& guess, data_table& target, int frame_delta 
 			for (int x = 0; x < 3; x++) {
 				double v = delta_guess.table[i].mat(y, x) - delta_target.table[i].mat(y, x);
 				// std::cout << delta_guess[i](y, x) << " - " << delta_target[i](y, x) << " = " << v << std::endl;
-				e += std::sqrt(v * v);
-				total += std::abs(delta_target.table[i].mat(y, x));
+				e += v * v;
+				normal_error += e / std::max(std::abs(delta_guess.table[i].mat(y, x)), std::abs(delta_target.table[i].mat(y, x)));
 				total_count++;
 			}
 		}
@@ -71,14 +83,15 @@ static double calc_error(data_table& guess, data_table& target, int frame_delta 
 		//std::cout << "A - B" << std::endl;
 		//std::cout << (delta_guess.table[i].mat - delta_target.table[i].mat).block(0, 0, 3, 3) << std::endl;
 
-		//Eigen::AngleAxisd g = Eigen::AngleAxisd(delta_guess.table[i].mat.block<3,3>(0,0));
-		//Eigen::AngleAxisd t = Eigen::AngleAxisd(delta_target.table[i].mat.block<3,3>(0,0));
+		Eigen::AngleAxisd g = Eigen::AngleAxisd(delta_guess.table[i].mat.block<3,3>(0,0));
+		Eigen::AngleAxisd t = Eigen::AngleAxisd(delta_target.table[i].mat.block<3,3>(0,0));
 
-		//double e = g.angle() - t.angle();
-		//e = e * e;
-		//e = sqrt(e);
+		double ae = g.angle() - t.angle();
+		ae = ae * ae;
 		//std::cout << delta_guess.table[i].id << " " << g.angle() << " : " << delta_target.table[i].id << " " << t.angle() << std::endl;
-		//error += e;
+		angle_error += ae;
+		angle_total += std::abs(g.angle());
+		angle_total_count++;
 		//total += std::abs(t.angle());
 
 		//Eigen::Vector4d g_vec = delta_guess.table[i].mat * Eigen::Vector4d(0, 1, 0, 0);
@@ -87,8 +100,8 @@ static double calc_error(data_table& guess, data_table& target, int frame_delta 
 		//rot_plane_guess.append(g_vec.block<3, 1>(0, 0));
 		//rot_plane_target.append(t_vec.block<3, 1>(0, 0));
 
-		//rot_plane_guess.append(g.axis());
-		//rot_plane_target.append(t.axis());
+		rot_plane_guess.append(g.axis());
+		rot_plane_target.append(t.axis());
 
 		//std::cout << "error: " << e << std::endl;
 		error += e;
@@ -97,25 +110,31 @@ static double calc_error(data_table& guess, data_table& target, int frame_delta 
 	std::cout << "table jump: " << frame_delta << std::endl;
 	std::cout << "total error: " << error << std::endl;
 	std::cout << "mean error: " << error / total_count << std::endl;
-	std::cout << "normalized mean error: " << error / total << std::endl;
+	// std::cout << "normalized error: " << normal_error << std::endl;
+	// std::cout << "normalized mean error: " << normal_error / total_count << std::endl;
 
-	//rot_plane_guess.finish();
-	//rot_plane_target.finish();
+	std::cout << "average angle: " << angle_total / angle_total_count << std::endl;
+	std::cout << "total angle error: " << angle_error << std::endl;
+	std::cout << "mean angle error: " << angle_error / angle_total_count << std::endl;
 
-	//std::cout << rot_plane_guess.str() << std::endl << std::endl;
-	//std::cout << rot_plane_target.str() << std::endl << std::endl;
+	rot_plane_guess.finish();
+	rot_plane_target.finish();
+
+	// std::cout << rot_plane_guess.str() << std::endl << std::endl;
+	// std::cout << rot_plane_target.str() << std::endl << std::endl;
 
 	return error;
 }
 
 int run(const char* fit_arg, const char* col_arg, const char* act_arg) {
-	std::fstream fit{fit_arg, std::ios::beg | std::ios::in};
-	std::fstream colmap{col_arg, std::ios::beg | std::ios::in};
-	std::fstream actual{act_arg, std::ios::beg | std::ios::in};
+	std::fstream fit{fit_arg, std::ios::in};
+	std::fstream colmap{col_arg, std::ios::in};
+	std::fstream actual{act_arg, std::ios::in};
 
 	data_table table = calc_transforms(&colmap, &fit);
 	data_table actual_table = parse_fit_data(&actual);
-	for (int i = 20; i < 200; i += 20) {
+	int max = std::min(table.table.size(), actual_table.table.size());
+	for (int i = std::min(10, max / 8); i < std::min(200,max/4); i += 10) {
 		calc_error(table, actual_table, i);
 	}
 
