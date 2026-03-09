@@ -2,8 +2,8 @@ include(FetchContent)
 
 set(CROS_SOURCE 
 	"src/source.cpp"
-	"src/matrix_table.h"
-)
+	"src/data_table.h"
+ "src/word_iterable.h" "src/cros.h" "src/points.h")
 
 add_executable(cros ${CROS_SOURCE})
 target_compile_features(cros PUBLIC cxx_std_20)
