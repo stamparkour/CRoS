@@ -10,12 +10,20 @@ static data_table calc_transforms(std::istream* _colmap, std::istream* _fit) {
 	
 	data_table colmap_table = parse_colmap_images_data(_colmap); // colmap world to camera space
 	data_table fit_table = parse_fit_data(_fit); // camera space to earth space
-	
+
+	std::cout << "fit data camera pos" << std::endl;
 	print_desmos_formatted_points(fit_table);
 	std::cout << std::endl;
+	std::cout << "fit data camera direction" << std::endl;
+	print_desmos_formatted_dir(fit_table);
+	std::cout << std::endl;
+	std::cout << "colmap camera pos" << std::endl;
 	data_table col_inv = colmap_table;
 	col_inv.inverse();
 	print_desmos_formatted_points(col_inv);
+	std::cout << std::endl;
+	std::cout << "colmap camera direction" << std::endl;
+	print_desmos_formatted_dir(col_inv);
 
 	//colmap world space to earth space
 	return fit_table * colmap_table;
