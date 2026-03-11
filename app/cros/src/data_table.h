@@ -197,15 +197,15 @@ namespace cros {
 		{ 0, 0, 0, 1 },
 	};
 
-	inline void print_desmos_formatted_points(const data_table& table, int jump = 5) {
+	inline void print_desmos_formatted_points(const data_table& table, int jump = 15) {
 		int index = 0;
 		point_str str{};
 
 		table.for_each([&](const table_entry& entry) {
 			auto mat = entry.mat;
 			if (index % jump == 0) {
-				auto point = desmos_transform * mat * Eigen::Vector4d(0, 0, 0, 1);
-				str.append(point.block<3,1>(0,0));
+				Eigen::Vector4d point = desmos_transform * mat * Eigen::Vector4d(0, 0, 0, 1);
+				str.append(point);
 			}
 			index++;
 		});
@@ -213,15 +213,15 @@ namespace cros {
 		std::cout << str.str() << std::endl;
 	}
 
-	inline void print_desmos_formatted_dir(const data_table& table, int jump = 5, int dir = 3) {
+	inline void print_desmos_formatted_dir(const data_table& table, int jump = 15) {
 		int index = 0;
 		point_str str{};
 
 		table.for_each([&](const table_entry& entry) {
 			auto mat = entry.mat;
 			if (index % jump == 0) {
-				auto point = desmos_transform * mat * Eigen::Vector4d(dir == 1 ? 1 : 0, dir == 2 ? 1 : 0, dir == 3 ? 1 : 0, 0);
-				str.append(point.block<3,1>(0, 0));
+				Eigen::Vector4d point = desmos_transform * mat * Eigen::Vector4d(0,0,1, 0);
+				str.append(point);
 			}
 			index++;
 		});

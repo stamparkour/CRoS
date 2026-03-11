@@ -115,6 +115,8 @@ static double calc_error(data_table& guess, data_table& target, int frame_delta 
 		error += e;
 	}
 
+	std::cout << "total frames: " << std::min(guess.table.size(), target.table.size()) << std::endl;
+	std::cout << "total frames looked at: " << angle_total_count << std::endl;
 	std::cout << "table jump: " << frame_delta << std::endl;
 	std::cout << "total error: " << error << std::endl;
 	std::cout << "mean error: " << error / total_count << std::endl;
@@ -142,7 +144,7 @@ int run(const char* fit_arg, const char* col_arg, const char* act_arg) {
 	data_table table = calc_transforms(&colmap, &fit);
 	data_table actual_table = parse_fit_data(&actual);
 	int max = std::min(table.table.size(), actual_table.table.size());
-	for (int i = std::min(10, max / 8); i < std::min(200,max/4); i += 10) {
+	for (int i = std::min(10, max / 8); i < std::min(200,max/4) + 9; i += 10) {
 		calc_error(table, actual_table, i);
 	}
 

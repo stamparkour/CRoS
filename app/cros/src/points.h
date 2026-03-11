@@ -26,6 +26,19 @@ namespace cros {
 			buffer += p;
 			points++;
 		}
+		void append(const Eigen::Vector4d& point) {
+			std::string p = "(";
+			p += std::to_string(point.x());
+			p += ",";
+			p += std::to_string(point.y());
+			p += ",";
+			p += std::to_string(point.z());
+			p += ")";
+
+			if (points != 0) buffer += ",";
+			buffer += p;
+			points++;
+		}
 		void finish() {
 			buffer += "]";
 		}
